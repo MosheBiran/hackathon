@@ -78,9 +78,25 @@ def makeMessageToGroups(group1, group2):
     return message
 
 
+# TODO - make remove
 def sendMessageToGroups(players, message):
     for playerSock in players.values():
         playerSock.sendall(bytes(message, 'utf-8'))
+
+
+def startGame(groupCount, playerSocket, message):
+    playerSocket.sendall(bytes(message, 'utf-8'))
+
+    nowTCP = time.time()
+    futureTCP = nowTCP + 10
+    while time.time() < futureTCP:
+        # connectionSocket, address = playerSocket.accept()
+        sentence = playerSocket.recv(1024)
+        print(sentence.decode('utf-8'))  # TODO - Remove
+        if sentence.decode('utf-8') not in groupCount:
+            groupCount[sentence.decode('utf-8')] = 1
+        else:
+            groupCount[sentence.decode('utf-8')] += 1
 
 
 
@@ -96,8 +112,22 @@ def main():
     group1 = lst[0]
     group2 = lst[1]
 
+    group1Count = {}
+    group2Count = {}
     message = makeMessageToGroups(group1, group2)
-    sendMessageToGroups(players, message)  # TODO - maybe in thread?
+    # sendMessageToGroups(players, message)  # TODO - maybe in thread?
+
+    for teamName, playerSocket in players.items():
+        if teamName in group1:
+            _thread.start_new_thread(startGame, (group1Count, playerSocket, message, ))
+        else:
+            _thread.start_new_thread(startGame, (group2Count, playerSocket, message, ))
+
+    sleep(10.1)
+
+    print(sum(group1Count.values()))
+    print(sum(group2Count.values()))
+
 
 
 

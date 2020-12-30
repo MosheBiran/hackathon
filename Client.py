@@ -43,6 +43,7 @@ def main():
     while True:
         if msvcrt.kbhit():
             key = msvcrt.getch()
+            clientSocket.send(key)
             print("Key is {}".format(key))
 
 
