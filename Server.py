@@ -9,7 +9,7 @@ from scapy.all import get_if_addr
 def brodcast(socky):
     try:
         message = b'\xfe\xed\xbe\xef\x02\x19\xA5'
-        # ip = get_if_addr('eth1')
+
         ip = '127.0.0.1'
         print("Server started, listening on IP address " + ip)
         # our message is "offer" to every client who is listening
@@ -18,11 +18,13 @@ def brodcast(socky):
         while time.time() < future:
             socky.sendto(message, ('255.255.255.255', 13117))
             sleep(1)
+
     except:
         print("Oh NO!!!!")
 
 
 def receiveTCP(players, serverSocket):
+
 
     nowTCP = time.time()
     futureTCP = nowTCP + 10
@@ -99,7 +101,7 @@ def gameSummaryMessage(group1, group2, group1Count, group2Count):
         winners = group2
     elif sumOfGroup1 == sumOfGroup2:
         message += "Its a TIE!!!!! Good Job!\n\n"
-        # TODO - add 1 and 2
+        winners = {**group1, **group2}
 
     message += "Congratulations to the winners:\n\n"
     message += "==\n\n"
@@ -110,33 +112,34 @@ def gameSummaryMessage(group1, group2, group1Count, group2Count):
 
 
 def main():
-
-    # ip = get_if_addr('eth1')
-    # UDP SOCKET
-    ip = '127.0.0.1'
-    port = 13117
-    # UDP
-    socky = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    socky.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    socky.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-    socky.bind((ip, port))
-    # mode of listening
-
-
     # TCP SOCKET
     # ip = get_if_addr('eth1')
+
     ip = '127.0.0.1'
     serverPort = 6565
     serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     serverSocket.bind((ip, serverPort))
-    serverSocket.listen(20)
+    serverSocket.listen()
 
+    # UDP
+    # UDP SOCKET
+    ip = '127.0.0.1'
+    port = 13117
+    socky = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    socky.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    socky.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+    socky.bind((ip, port))
+
+    players = {}
     while True:
-        players = {}
+
 
         _thread.start_new_thread(brodcast, (socky, ))
         _thread.start_new_thread(receiveTCP, (players, serverSocket, ))
         sleep(10.1)
+
+        if len(players) == 0:
+            continue
 
         lst = divedToGroups(players)
         group1 = lst[0]
@@ -158,6 +161,11 @@ def main():
 
         for playerSocket in players.values():
             playerSocket.sendall(bytes(message, 'utf-8'))
+
+        players.clear()
+
+
+
 
 
 
