@@ -9,7 +9,7 @@ from scapy.all import get_if_addr
 def brodcast(socky):
     try:
         message = b'\xfe\xed\xbe\xef\x02\x19\xA5'
-
+        # ip = get_if_addr('eth1')
         ip = '127.0.0.1'
         print("Server started, listening on IP address " + ip)
         # our message is "offer" to every client who is listening
@@ -23,7 +23,6 @@ def brodcast(socky):
 
 
 def receiveTCP(players, serverSocket):
-
 
     nowTCP = time.time()
     futureTCP = nowTCP + 10
@@ -113,7 +112,6 @@ def gameSummaryMessage(group1, group2, group1Count, group2Count):
 def main():
 
     # ip = get_if_addr('eth1')
-
     # UDP SOCKET
     ip = '127.0.0.1'
     port = 13117
@@ -126,6 +124,7 @@ def main():
 
 
     # TCP SOCKET
+    # ip = get_if_addr('eth1')
     ip = '127.0.0.1'
     serverPort = 6565
     serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

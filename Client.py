@@ -2,6 +2,7 @@ import msvcrt
 import socket
 import time
 from threading import Thread
+from scapy.all import get_if_addr
 
 # Linux
 # import sys
@@ -21,6 +22,7 @@ def main():
             try:
                 correctDate = b'\xfe\xed\xbe\xef\x02'
                 ip = '127.0.0.1'
+                # ip = get_if_addr('eth1')
                 port = 13117
                 client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
                 client.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
@@ -28,9 +30,10 @@ def main():
                 print("Client started, listening for offer requests...")
                 data, address = client.recvfrom(1024)
                 if data[0:4] != correctDate[0:4]:
-                    print("Wrong Message")
+                    print("Wrong Message")  # TODO - Remove
                     # continue
                 print("Received offer from " + ip + "," + " attempting to connect...")
+                client.close()
             except:
                 print("Oh NO!!!!")
 
@@ -40,6 +43,8 @@ def main():
             # TCP
             try:
                 serverName = '127.0.0.1'
+                # serverName = get_if_addr('eth1')
+
                 clientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 clientSocket.connect((serverName, (int(hex(data[5])[2:]+hex(data[6])[2:], 16))))
                 clientSocket.sendall(bytes(group_name, 'utf-8'))
