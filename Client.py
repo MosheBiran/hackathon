@@ -1,7 +1,7 @@
 import msvcrt
 import socket
 import time
-from threading import Thread
+from scapy.all import get_if_addr
 
 # Linux
 # import sys
@@ -16,41 +16,59 @@ from threading import Thread
 
 def main():
     while True:
+
+        """---------------------------------UDP Socket Init------------------------------------"""
         # UDP
         try:
+
             correctDate = b'\xfe\xed\xbe\xef\x02'
+
+            # Linux
+            # ip = get_if_addr('eth1')
             ip = '127.0.0.1'
             port = 13117
-            client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-            client.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-            client.bind(("", port))
+
+            UDP_Client_Socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+            UDP_Client_Socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+            UDP_Client_Socket.bind(("", port))
+
             print("Client started, listening for offer requests...")
-            data, address = client.recvfrom(1024)
+
+            data, address = UDP_Client_Socket.recvfrom(1024)
+
             if data[0:4] != correctDate[0:4]:
                 print("Wrong Message")  # TODO - Remove
                 continue
+
             print("Received offer from " + ip + "," + " attempting to connect...")
+
         except:
-            print("Oh NO!!!!")
+            print("UDP Socket Exception")
             continue
 
 
-        # group_name = "Bits please, this is not a bug it's a feature\n"
-        group_name = "\n****Bits please****\n"
+        group_name = "\nBitS PleaSe\n"
+
+
+        """---------------------------------TCP Socket Init------------------------------------"""
 
         # TCP
         try:
-            serverName = '127.0.0.1'
-            clientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            clientSocket.connect((serverName, (int(hex(data[5])[2:]+hex(data[6])[2:], 16))))
-            clientSocket.sendall(bytes(group_name, 'utf-8'))
-            # clientSocket.close()
+            ip = '127.0.0.1'
+            TCP_Client_Socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            TCP_Client_Socket.connect((ip, (int(hex(data[5])[2:]+hex(data[6])[2:], 16))))
+            TCP_Client_Socket.sendall(bytes(group_name, 'utf-8'))
         except:
-            print("Oh NO TCP Problem!!!!")
+            print("TCP Socket Exception")
             continue
 
-        message = clientSocket.recv(1024)
-        print(message.decode('utf-8'))
+        """---------------------------------Receive Game Start Message------------------------------------"""
+
+        StartMessage = TCP_Client_Socket.recv(1024)
+        print(StartMessage.decode('utf-8'))
+
+
+        """---------------------------------Game Press Input 10 Sec------------------------------------"""
 
         #  Windows
         now = time.time()
@@ -58,7 +76,7 @@ def main():
         while time.time() < futureTCP:
             if msvcrt.kbhit():
                 key = msvcrt.getch()
-                clientSocket.send(key)
+                TCP_Client_Socket.send(key)
 
 
         # #  Linux!
@@ -78,14 +96,10 @@ def main():
         #
         # finally:
         #     termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
-
-        message = clientSocket.recv(1024)
-        print(message.decode('utf-8'))
-
-        client.close()
-        clientSocket.close()
-
-
+        """---------------------------------Summary Message------------------------------------"""
+        SummaryMessage = TCP_Client_Socket.recv(1024)
+        print(SummaryMessage.decode('utf-8'))
+        print("\nServer disconnected, listening for offer requests...")
 
 
 
