@@ -73,7 +73,7 @@ def main():
             StartMessage = TCP_Client_Socket.recv(1024)
         except:
             print("Server Disconnected")
-            return
+            continue
         print(StartMessage.decode('utf-8'))
 
 
