@@ -6,12 +6,16 @@ from scapy.all import get_if_addr
 
 
 def broadcastUDP(UDP_server_Socket):
-
+    """
+    This function broadcast for 10 seconds UDP sockets to anyone who listens and want play
+    :param UDP_server_Socket: The UDP Server Socket initialized
+    """
     message_structure = b'\xfe\xed\xbe\xef\x02\x19\xA5'
 
     # Linux
     # ip = get_if_addr('eth1')
 
+    # Windows
     ip = '127.0.0.1'
     print("Server started, listening on IP address " + ip)
 
@@ -23,8 +27,11 @@ def broadcastUDP(UDP_server_Socket):
 
 
 def receiveTCP(players, TCP_Server_Socket):
-
-
+    """
+    This function receiving for 10 seconds TCP connections from players that what to play
+    :param players: empty dictionary of players that will be fulled - {key = player name : Value = Connection socket}
+    :param TCP_Server_Socket: The TCP Server Socket initialized
+    """
     nowTCP = time.time()
     futureTCP = nowTCP + 10
     while time.time() < futureTCP:
@@ -35,6 +42,11 @@ def receiveTCP(players, TCP_Server_Socket):
 
 
 def divedToGroups(players):
+    """
+    This function dived the players into 2 groups.
+    :param players: dictionary of players - {key = player name : Value = Connection socket}
+    :return: list of groups - [group 1 dictionary, group 2 dictionary]
+    """
     group1 = {}
     group2 = {}
     count = 1
@@ -49,7 +61,12 @@ def divedToGroups(players):
 
 
 def makeMessageToGroups(group1, group2):
-
+    """
+    This function makes the Start game message of the players.
+    :param group1: dictionary of group 1 - {key = player name : Value = Connection socket}
+    :param group2: dictionary of group 2 - {key = player name : Value = Connection socket}
+    :return: String - The Start Game Message
+    """
     message = "\nWelcome to Keyboard Spamming Battle Royal.\n"
     message += "\n*** Group 1: ***\n"
     message += "==\n"
@@ -64,21 +81,34 @@ def makeMessageToGroups(group1, group2):
     for player in group2.keys():
         message += player + "\n"
 
-    message += "\n"
-    message += "Start pressing keys on your keyboard as fast as you can!!\n"
+    message += "\n\nStart pressing keys on your keyboard as fast as you can!!\n"
 
     return message
 
 
-def startGame(groupCount, playerSocket, message):
-
-    playerSocket.sendall(bytes(message, 'utf-8'))
+def startGame(groupCount, playerSocket, message, playerName):
+    """
+    This function sends the start game message to the player
+    and starting to listen with TCP server socket to the typing of the player for 10 seconds
+    :param playerName: String - Player Name
+    :param groupCount: dictionary of the characters that group 1 typed -  {key = character : Value = number it typed}
+    :param playerSocket: the TCP Socket of the player
+    :param message: String - the start game message
+    """
+    try:
+        playerSocket.sendall(bytes(message, 'utf-8'))
+    except:
+        print("player Disconnected  : " + playerName + "\n")
+        return
 
     nowTCP = time.time()
     futureTCP = nowTCP + 10
     while time.time() < futureTCP:
-
-        received_data = playerSocket.recv(1024)
+        try:
+            received_data = playerSocket.recv(1024)
+        except:
+            print("player Disconnected  : " + playerName + "\n")
+            return
 
         if received_data.decode('utf-8') not in groupCount:
             groupCount[received_data.decode('utf-8')] = 1
@@ -88,8 +118,16 @@ def startGame(groupCount, playerSocket, message):
 
 
 def gameSummaryMessage(group1, group2, group1Count, group2Count):
-
+    """
+    This function summarize the game into a message
+    :param group1: dictionary of group 1 - {key = player name : Value = Connection socket}
+    :param group2: dictionary of group 2 - {key = player name : Value = Connection socket}
+    :param group1Count: dictionary of the characters that group 1 typed -  {key = character : Value = number it typed}
+    :param group2Count: dictionary of the characters that group 2 typed -  {key = character : Value = number it typed}
+    :return: message: String - the summary message
+    """
     winners = {}
+    winners_char = {}
     message = ""
     sumOfGroup1 = sum(group1Count.values())
     sumOfGroup2 = sum(group2Count.values())
@@ -103,23 +141,32 @@ def gameSummaryMessage(group1, group2, group1Count, group2Count):
     if sumOfGroup1 > sumOfGroup2:
         message += "******  Group 1 wins!  ******\n\n"
         winners = group1
+        winners_char = group1Count
 
     elif sumOfGroup1 < sumOfGroup2:
         message += "******  Group 2 wins!  ******\n\n"
         winners = group2
+        winners_char = group2Count
 
     elif sumOfGroup1 == sumOfGroup2:
         message += "******* Its a TIE!!!!! Good Job! *******\n\n"
         winners = {**group1, **group2}
-
-    # Sorted_By_Count = dict(sorted(winners.items(), key=lambda e: e[1]))
-    #
-    # message += "\n The Most  Typed Character is :  " + list(Sorted_By_Count.keys())[0] + "\n"
-    # message += "\n The Least Typed Character is :  " + list(Sorted_By_Count.keys())[len(Sorted_By_Count) - 1] + "\n"
+        winners_char = {**group1Count, **group2Count}
 
 
+    message += "\n **********  Statistics  ********** \n"
 
-    message += "Congratulations to the winners:\n"
+    if len(winners_char) > 0:
+
+        Sorted_By_Count = dict(sorted(winners_char.items(), key=lambda e: e[1]))
+
+        message += "\nThe Most  Typed Character is :  '" + list(Sorted_By_Count.keys())[len(Sorted_By_Count) - 1] + "'\n"
+        message += "\nThe Least Typed Character is :  '" + list(Sorted_By_Count.keys())[0] + "'\n"
+        message += "\nThe Number of Unique Character is :  '" + str(len(Sorted_By_Count.keys())) + "'\n"
+
+
+
+    message += "\nCongratulations to the winners:\n"
     message += "==\n"
 
     for name in winners.keys():
@@ -163,12 +210,18 @@ def main():
         sleep(10.1)
 
         #  TODO - check if we need this
-        # if len(players) == 0:
-        #     continue
+        if len(players) == 0:
+            print("\n**** There Are No players Connected .... No game .... ****\n")
+            continue
 
         """--------------------------------- Deviation Of The Players Into 2 Groups ------------------------------------"""
 
         lst_of_groups = divedToGroups(players)
+
+        if len(lst_of_groups) == 0:
+            print("\nFailed To Devised Into Groups ....\n")
+            continue
+
         group1 = lst_of_groups[0]
         group2 = lst_of_groups[1]
 
@@ -184,9 +237,9 @@ def main():
 
         for PlayerName, playerSocket in players.items():
             if PlayerName in group1:
-                _thread.start_new_thread(startGame, (group1_count, playerSocket, StartMessage, ))
+                _thread.start_new_thread(startGame, (group1_count, playerSocket, StartMessage, PlayerName,))
             else:
-                _thread.start_new_thread(startGame, (group_2_Count, playerSocket, StartMessage, ))
+                _thread.start_new_thread(startGame, (group_2_Count, playerSocket, StartMessage, PlayerName,))
 
         sleep(10.1)
 
@@ -194,9 +247,12 @@ def main():
 
         SummaryMessage = gameSummaryMessage(group1, group2, group1_count, group_2_Count)
 
-        for playerSocket in players.values():
-            playerSocket.sendall(bytes(SummaryMessage, 'utf-8'))
-
+        for playerName, playerSocket in players.items():
+            try:
+                playerSocket.sendall(bytes(SummaryMessage, 'utf-8'))
+            except:
+                print("\nPlayer Disconnected : " + playerName + "\n")
+                continue
 
         players.clear()
 

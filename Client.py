@@ -25,6 +25,7 @@ def main():
 
             # Linux
             # ip = get_if_addr('eth1')
+
             ip = '127.0.0.1'
             port = 13117
 
@@ -47,14 +48,19 @@ def main():
             continue
 
 
-        group_name = "\nBitS PleaSe\n"
+        group_name = "BitS PleaSe\n"
 
 
         """---------------------------------TCP Socket Init------------------------------------"""
 
         # TCP
         try:
+            # Linux
+            # ip = get_if_addr('eth1')
+
+            # Windows
             ip = '127.0.0.1'
+
             TCP_Client_Socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             TCP_Client_Socket.connect((ip, (int(hex(data[5])[2:]+hex(data[6])[2:], 16))))
             TCP_Client_Socket.sendall(bytes(group_name, 'utf-8'))
@@ -63,8 +69,11 @@ def main():
             continue
 
         """---------------------------------Receive Game Start Message------------------------------------"""
-
-        StartMessage = TCP_Client_Socket.recv(1024)
+        try:
+            StartMessage = TCP_Client_Socket.recv(1024)
+        except:
+            print("Server Disconnected")
+            return
         print(StartMessage.decode('utf-8'))
 
 
@@ -76,19 +85,19 @@ def main():
         while time.time() < futureTCP:
             if msvcrt.kbhit():
                 key = msvcrt.getch()
-                TCP_Client_Socket.send(key)
-
+                try:
+                    TCP_Client_Socket.send(key)
+                except:
+                    print("Server Disconnected")
+                    break
 
         # #  Linux!
         # old_settings = termios.tcgetattr(sys.stdin)
         # try:
         #     tty.setcbreak(sys.stdin.fileno())
-        #
-        #     i = 0
-        #     while 1:
-        #         print(i)
-        #         i += 1
-        #
+        #     now = time.time()
+        #         futureTCP = now + 10
+        #         while time.time() < futureTCP:
         #         if isData():
         #             c = sys.stdin.read(1)
         #             if c == '\x1b':  # x1b is ESC
@@ -97,9 +106,14 @@ def main():
         # finally:
         #     termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
         """---------------------------------Summary Message------------------------------------"""
-        SummaryMessage = TCP_Client_Socket.recv(1024)
-        print(SummaryMessage.decode('utf-8'))
-        print("\nServer disconnected, listening for offer requests...")
+        try:
+            SummaryMessage = TCP_Client_Socket.recv(1024)
+            print(SummaryMessage.decode('utf-8'))
+            print("\nServer disconnected, listening for offer requests...")
+        except:
+            print("Server Disconnected")
+
+
 
 
 
